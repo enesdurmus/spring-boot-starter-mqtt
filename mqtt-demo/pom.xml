@@ -4,18 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.github.enesdurmus</groupId>
+        <groupId>io.github.enesdurmus</groupId>
         <artifactId>spring-boot-starter-mqtt</artifactId>
         <version>1.0.0</version>
     </parent>
 
     <artifactId>mqtt-demo</artifactId>
-
-    <properties>
-        <maven.compiler.source>24</maven.compiler.source>
-        <maven.compiler.target>24</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -27,7 +21,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.enesdurmus</groupId>
+            <groupId>io.github.enesdurmus</groupId>
             <artifactId>mqtt-starter</artifactId>
             <version>1.0.0</version>
         </dependency>
