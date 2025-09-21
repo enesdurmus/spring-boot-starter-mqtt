@@ -1,4 +1,4 @@
-package com.github.enesdurmus.mqtt;
+package io.github.enesdurmus.mqtt;
 
 public interface MqttTemplate {
     void publish(String topic, String payload);

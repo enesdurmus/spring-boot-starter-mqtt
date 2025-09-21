@@ -1,7 +1,7 @@
 package demo;
 
-import com.github.enesdurmus.mqtt.MqttListener;
-import com.github.enesdurmus.mqtt.MqttTemplate;
+import io.github.enesdurmus.mqtt.MqttListener;
+import io.github.enesdurmus.mqtt.MqttTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RestController;

@@ -1,4 +1,4 @@
-package com.github.enesdurmus.mqtt;
+package io.github.enesdurmus.mqtt;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

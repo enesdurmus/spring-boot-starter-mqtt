@@ -1,4 +1,4 @@
-package com.github.enesdurmus.mqtt;
+package io.github.enesdurmus.mqtt;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.slf4j.Logger;

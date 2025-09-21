@@ -1,4 +1,4 @@
-package com.github.enesdurmus.mqtt;
+package io.github.enesdurmus.mqtt;
 
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 import org.springframework.integration.support.MessageBuilder;

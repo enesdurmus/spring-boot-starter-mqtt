@@ -1,4 +1,4 @@
-package com.github.enesdurmus.mqtt;
+package io.github.enesdurmus.mqtt;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
