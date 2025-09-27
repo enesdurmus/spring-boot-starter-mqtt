@@ -26,4 +26,9 @@ jobs:
           gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Deploy to Maven Central
-        run: mvn --batch-mode -DskipPlexusMojo=true clean deploy -Prelease -X
+        run: |
+          mvn \
+            --batch-mode \
+            -DskipPlexusMojo=true \ 
+            -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} \
+            clean deploy -Prelease
