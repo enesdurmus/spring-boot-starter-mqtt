@@ -19,6 +19,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 class MqttConfig {
 
     @Bean
+    @ConditionalOnMissingBean
     public MessageConverter messageConverter() {
         return new JacksonMessageConverter();
     }
