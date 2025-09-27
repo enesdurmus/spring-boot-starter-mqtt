@@ -11,27 +11,19 @@ jobs:
       contents: read
 
     steps:
-      - name: Check out code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Java and Maven Settings for Sonatype
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17' # Set the Java version consistent with pom.xml
+          java-version: '17'
           distribution: 'temurin'
-          # Configure settings.xml for Sonatype OSSRH
           server-id: ossrh
           server-username: ${{ secrets.OSSRH_USERNAME }}
           server-password: ${{ secrets.OSSRH_TOKEN }}
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Import GPG Key
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-
-      - name: Deploy to Maven Central with Debug
-        run: mvn --batch-mode clean deploy -Prelease -X
-        env:
-          # The GPG Passphrase is still needed by the maven-gpg-plugin
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: Deploy to Maven Central
+        run: mvn --batch-mode -DskipPlexusMojo=true clean deploy -Prelease -X
