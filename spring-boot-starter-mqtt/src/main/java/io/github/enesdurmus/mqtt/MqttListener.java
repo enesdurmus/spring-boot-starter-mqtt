@@ -8,7 +8,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MqttListener {
-    String topic();
+    String[] topics();
 
     int qos() default 0;
+
+    boolean injectContext() default false;
 }

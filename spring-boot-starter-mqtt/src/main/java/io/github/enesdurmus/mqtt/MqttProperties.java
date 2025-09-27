@@ -11,6 +11,9 @@ public class MqttProperties {
     private String password;
     private boolean cleanSession = true;
     private int keepAliveInterval = 60;
+    private int connectionTimeOut = 60;
+
+    private int concurrency = 1;
 
     public String getUrl() {
         return url;
@@ -58,5 +61,21 @@ public class MqttProperties {
 
     public void setKeepAliveInterval(int keepAliveInterval) {
         this.keepAliveInterval = keepAliveInterval;
+    }
+
+    public int getConnectionTimeOut() {
+        return connectionTimeOut;
+    }
+
+    public void setConnectionTimeOut(int connectionTimeOut) {
+        this.connectionTimeOut = connectionTimeOut;
+    }
+
+    public int getConcurrency() {
+        return concurrency;
+    }
+
+    public void setConcurrency(int concurrency) {
+        this.concurrency = concurrency;
     }
 }

@@ -1,24 +1,23 @@
 package io.github.enesdurmus.mqtt;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class MqttListenerRegistry {
+class MqttListenerRegistry {
 
-    private final Map<String, List<ListenerDefinition>> listeners = new ConcurrentHashMap<>();
+    private final Map<String, List<MqttListenerEndpoint>> registry = new HashMap<>();
 
-    public void register(String topic, Method method, Object bean, int qos) {
-        listeners.computeIfAbsent(topic, t -> new ArrayList<>())
-                .add(new ListenerDefinition(bean, method, qos));
+    void register(MqttListenerEndpoint endpoint) {
+        for (String topic : endpoint.getTopics()) {
+            registry.computeIfAbsent(topic, k -> new ArrayList<>()).add(endpoint);
+        }
     }
 
-    public Map<String, List<ListenerDefinition>> getListeners() {
-        return listeners;
-    }
-
-    public record ListenerDefinition(Object bean, Method method, int qos) {
+    public List<MqttListenerEndpoint> getAllEndpoints() {
+        return registry.values().stream()
+                .flatMap(List::stream)
+                .toList();
     }
 }

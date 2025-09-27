@@ -1,29 +1,21 @@
 package io.github.enesdurmus.mqtt;
 
-import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
-import org.springframework.integration.support.MessageBuilder;
-import org.springframework.messaging.Message;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
 
 class DefaultMqttTemplate implements MqttTemplate {
 
-    private final MqttPahoMessageHandler handler;
+    private final MqttClient client;
 
-    DefaultMqttTemplate(MqttPahoMessageHandler handler) {
-        this.handler = handler;
+    DefaultMqttTemplate(MqttClient client) {
+        this.client = client;
     }
 
-    public void publish(String topic, String payload) {
-        Message<String> message = MessageBuilder.withPayload(payload)
-                .setHeader("mqtt_topic", topic)
-                .build();
-        handler.handleMessage(message);
+    public void publish(String topic, String payload) throws MqttException {
+        client.publish(topic, payload.getBytes(), 0, false);
     }
 
-    public void publish(String topic, String payload, int qos) {
-        Message<String> message = MessageBuilder.withPayload(payload)
-                .setHeader("mqtt_topic", topic)
-                .setHeader("mqtt_qos", qos)
-                .build();
-        handler.handleMessage(message);
+    public void publish(String topic, String payload, int qos, boolean retained) throws MqttException {
+        client.publish(topic, payload.getBytes(), qos, retained);
     }
 }

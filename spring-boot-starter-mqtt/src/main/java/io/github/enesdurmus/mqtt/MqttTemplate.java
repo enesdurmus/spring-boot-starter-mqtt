@@ -1,7 +1,9 @@
 package io.github.enesdurmus.mqtt;
 
-public interface MqttTemplate {
-    void publish(String topic, String payload);
+import org.eclipse.paho.client.mqttv3.MqttException;
 
-    void publish(String topic, String payload, int qos);
+public interface MqttTemplate {
+    void publish(String topic, String payload) throws MqttException;
+
+    void publish(String topic, String payload, int qos, boolean retained) throws MqttException;
 }
