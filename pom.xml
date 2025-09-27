@@ -36,7 +36,6 @@
     </developers>
 
     <modules>
-        <module>spring-boot-starter-mqtt-demo</module>
         <module>spring-boot-starter-mqtt</module>
     </modules>
 
