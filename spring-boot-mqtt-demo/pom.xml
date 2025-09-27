@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.github.enesdurmus</groupId>
-        <artifactId>spring-boot-starter-mqtt-parent</artifactId>
+        <artifactId>spring-boot-mqtt</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>spring-boot-starter-mqtt-demo</artifactId>
+    <artifactId>spring-boot-mqtt-demo</artifactId>
 
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
