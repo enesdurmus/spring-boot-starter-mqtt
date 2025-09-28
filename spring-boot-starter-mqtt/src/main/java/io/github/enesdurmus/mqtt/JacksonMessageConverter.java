@@ -5,7 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 class JacksonMessageConverter implements MessageConverter {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+
+    JacksonMessageConverter(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public Object read(String payload, Class<?> targetType) throws JsonProcessingException {

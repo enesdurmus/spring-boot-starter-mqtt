@@ -1,5 +1,6 @@
 package io.github.enesdurmus.mqtt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -20,8 +21,14 @@ class MqttConfig {
 
     @Bean
     @ConditionalOnMissingBean
-    public MessageConverter messageConverter() {
-        return new JacksonMessageConverter();
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public MessageConverter messageConverter(ObjectMapper objectMapper) {
+        return new JacksonMessageConverter(objectMapper);
     }
 
     @Bean
