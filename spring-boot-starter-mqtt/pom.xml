@@ -5,9 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.github.enesdurmus</groupId>
-        <artifactId>spring-boot-mqtt</artifactId>
-        <version>0.0.1</version>
+        <artifactId>spring-boot-mqtt-parent</artifactId>
+        <version>0.0.2</version>
     </parent>
+
+    <name>spring-boot-starter-mqtt</name>
+    <description>A Spring Boot Starter for MQTT Integration</description>
 
     <artifactId>spring-boot-starter-mqtt</artifactId>
     <packaging>jar</packaging>

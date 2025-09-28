@@ -11,8 +11,8 @@
     </parent>
 
     <groupId>io.github.enesdurmus</groupId>
-    <artifactId>spring-boot-mqtt</artifactId>
-    <version>0.0.1</version>
+    <artifactId>spring-boot-mqtt-parent</artifactId>
+    <version>0.0.2</version>
     <packaging>pom</packaging>
 
     <name>spring-boot-mqtt</name>
@@ -36,8 +36,8 @@
     </developers>
 
     <modules>
-        <module>spring-boot-mqtt-demo</module>
         <module>spring-boot-starter-mqtt</module>
+        <module>spring-boot-mqtt-demo</module>
     </modules>
 
     <scm>
@@ -49,11 +49,11 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>ossrh</id>
+            <id>central</id>
             <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
         <repository>
-            <id>ossrh</id>
+            <id>central</id>
             <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
@@ -62,11 +62,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-
-        <gpg.plugin.version>3.2.2</gpg.plugin.version>
-        <source.plugin.version>3.3.0</source.plugin.version>
-        <javadoc.plugin.version>3.6.3</javadoc.plugin.version>
-        <nexus.plugin.version>1.6.8</nexus.plugin.version>
+        <sonatype.central.version>0.9.0</sonatype.central.version>
+        <maven.source.plugin.version>3.3.0</maven.source.plugin.version>
     </properties>
 
     <build>
@@ -89,51 +86,71 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${sonatype.central.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <configuration>
+                            <serverId>central</serverId>
+                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>${source.plugin.version}</version>
+                        <version>${maven.source.plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
-                                <goals><goal>jar-no-fork</goal></goals>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>${javadoc.plugin.version}</version>
+                        <version>3.6.3</version>
                         <executions>
                             <execution>
-                                <id>attach-javadocs</id>
-                                <goals><goal>jar</goal></goals>
-                                <configuration>
-                                    <failOnError>false</failOnError>
-                                </configuration>
+                                <id>attach-javadoc</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <stylesheet>java</stylesheet>
+                            <doclint>none</doclint>
+                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>${gpg.plugin.version}</version>
+                        <version>3.2.7</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
-                                <phase>deploy</phase>
-                                <goals><goal>sign</goal></goals>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
                             </execution>
                         </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>${nexus.plugin.version}</version>
-                        <extensions>true</extensions>
                         <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
                         </configuration>
                     </plugin>
                 </plugins>
