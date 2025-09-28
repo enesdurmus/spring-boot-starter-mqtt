@@ -21,20 +21,8 @@ class MqttListenerContainer {
         for (MqttListenerEndpoint endpoint : registry.getAllEndpoints()) {
             try {
                 for (String topic : endpoint.getTopics()) {
-                    mqttClient.subscribe(topic, endpoint.getQos(), (t, msg) -> {
-                        String payload = new String(msg.getPayload());
-                        try {
-                            executor.execute(() -> {
-                                try {
-                                    endpoint.invoke(payload, msg);
-                                } catch (Exception e) {
-                                    throw new IllegalStateException(e);
-                                }
-                            });
-                        } catch (Exception e) {
-                            throw new IllegalStateException(e);
-                        }
-                    });
+                    MqttMessageListener messageListener = new MqttMessageListener(endpoint, executor);
+                    mqttClient.subscribe(topic, endpoint.getQos(), messageListener);
                 }
             } catch (Exception e) {
                 throw new IllegalStateException(e);

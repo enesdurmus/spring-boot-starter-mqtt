@@ -56,4 +56,16 @@ public class MqttListenerEndpoint {
     public int getQos() {
         return qos;
     }
+
+    public Object getBean() {
+        return bean;
+    }
+
+    public Method getMethod() {
+        return method;
+    }
+
+    public boolean isInjectContext() {
+        return injectContext;
+    }
 }
