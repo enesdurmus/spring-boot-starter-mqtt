@@ -18,10 +18,10 @@ public class DemoController {
         this.mqttTemplate = mqttTemplate;
     }
 
-    @MqttListener(topics = "alo/#", qos = 1)
+    @MqttListener(topics = "test/#", qos = 1)
     public void test(Test message) throws MqttException {
         log.info("Received message: {}", message);
-        mqttTemplate.publish("alo2", message.b);
+        mqttTemplate.publish("demo", message.b);
     }
 
     public record Test(int a, String b) {

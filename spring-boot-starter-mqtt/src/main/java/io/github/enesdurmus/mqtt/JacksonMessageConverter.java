@@ -16,4 +16,9 @@ class JacksonMessageConverter implements MessageConverter {
         if (targetType == String.class) return payload;
         return objectMapper.readValue(payload, targetType);
     }
+
+    @Override
+    public byte[] write(Object payload) throws Exception {
+        return objectMapper.writeValueAsBytes(payload);
+    }
 }

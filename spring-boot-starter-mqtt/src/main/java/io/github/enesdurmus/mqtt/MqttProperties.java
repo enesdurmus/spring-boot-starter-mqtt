@@ -5,15 +5,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "mqtt")
 public class MqttProperties {
 
-    private String url = "tcp://localhost:1883";
+    private String url;
     private String clientId = "spring-mqtt-client";
     private String username;
     private String password;
     private boolean cleanSession = true;
     private int keepAliveInterval = 60;
     private int connectionTimeOut = 60;
-
-    private int concurrency = 1;
+    private int concurrency = 3;
 
     public String getUrl() {
         return url;

@@ -62,7 +62,7 @@ class MqttConfig {
     @ConditionalOnMissingBean
     public MqttTemplate mqttTemplate(@Qualifier("publisherClient") MqttClient publisherClient,
                                      MessageConverter messageConverter) {
-        return new DefaultMqttTemplate(publisherClient);
+        return new DefaultMqttTemplate(publisherClient, messageConverter);
     }
 
     @Bean(destroyMethod = "close")

@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultMqttTemplateTest {
@@ -15,11 +16,14 @@ class DefaultMqttTemplateTest {
     @Mock
     private MqttClient mqttClient;
 
+    @Mock
+    private MessageConverter messageConverter;
+
     private DefaultMqttTemplate sut;
 
     @BeforeEach
     void setUp() {
-        sut = new DefaultMqttTemplate(mqttClient);
+        sut = new DefaultMqttTemplate(mqttClient, messageConverter);
     }
 
     @Test
@@ -27,6 +31,8 @@ class DefaultMqttTemplateTest {
         // given
         String topic = "test/topic";
         String payload = "Hello, MQTT!";
+
+        when(messageConverter.write(payload)).thenReturn(payload.getBytes());
 
         // when
         sut.publish(topic, payload);
@@ -42,6 +48,8 @@ class DefaultMqttTemplateTest {
         String payload = "Hello, MQTT!";
         int qos = 1;
         boolean retained = true;
+
+        when(messageConverter.write(payload)).thenReturn(payload.getBytes());
 
         // when
         sut.publish(topic, payload, qos, retained);

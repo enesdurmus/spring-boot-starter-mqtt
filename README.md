@@ -116,7 +116,6 @@ public class NotificationService {
 
     private final MqttTemplate mqttTemplate;
 
-    @Autowired
     public NotificationService(MqttTemplate mqttTemplate) {
         this.mqttTemplate = mqttTemplate;
     }

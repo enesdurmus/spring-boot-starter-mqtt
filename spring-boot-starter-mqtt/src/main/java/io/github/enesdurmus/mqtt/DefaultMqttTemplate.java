@@ -6,16 +6,29 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 class DefaultMqttTemplate implements MqttTemplate {
 
     private final MqttClient client;
+    private final MessageConverter converter;
 
-    DefaultMqttTemplate(MqttClient client) {
+    DefaultMqttTemplate(MqttClient client,
+                        MessageConverter converter) {
         this.client = client;
+        this.converter = converter;
     }
 
-    public void publish(String topic, String payload) throws MqttException {
-        client.publish(topic, payload.getBytes(), 0, false);
+    public void publish(String topic, Object payload) throws MqttException {
+        try {
+            byte[] convertedPayload = converter.write(payload);
+            client.publish(topic, convertedPayload, 0, false);
+        } catch (Exception e) {
+            throw new MqttException(e);
+        }
     }
 
-    public void publish(String topic, String payload, int qos, boolean retained) throws MqttException {
-        client.publish(topic, payload.getBytes(), qos, retained);
+    public void publish(String topic, Object payload, int qos, boolean retained) throws MqttException {
+        try {
+            byte[] convertedPayload = converter.write(payload);
+            client.publish(topic, convertedPayload, qos, retained);
+        } catch (Exception e) {
+            throw new MqttException(e);
+        }
     }
 }
