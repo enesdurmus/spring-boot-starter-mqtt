@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.github.enesdurmus</groupId>
         <artifactId>spring-boot-mqtt-parent</artifactId>
-        <version>0.0.2</version>
+        <version>1.0.0</version>
     </parent>
 
     <name>spring-boot-mqtt-demo</name>
@@ -28,7 +28,7 @@
         <dependency>
             <groupId>io.github.enesdurmus</groupId>
             <artifactId>spring-boot-starter-mqtt</artifactId>
-            <version>0.0.2</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

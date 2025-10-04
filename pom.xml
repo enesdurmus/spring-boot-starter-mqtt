@@ -12,7 +12,7 @@
 
     <groupId>io.github.enesdurmus</groupId>
     <artifactId>spring-boot-mqtt-parent</artifactId>
-    <version>0.0.2</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
 
     <name>spring-boot-mqtt</name>
