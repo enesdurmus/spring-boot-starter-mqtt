@@ -2,35 +2,30 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-`spring-boot-starter-mqtt` is a starter package that allows you to easily add MQTT integration to your Spring Boot
-applications. It uses the `spring-integration-mqtt` and `eclipse-paho-client` libraries in the background, providing a
-simple annotation-based interface to subscribe to MQTT topics and publish messages.
+`spring-boot-starter-mqtt` provides auto-configuration for MQTT integration in Spring Boot applications. It simplifies publishing messages and subscribing to topics.
 
 ## Features
 
-- **Annotation-Based Subscription:** Easily listen to MQTT topics with the `@MqttListener` annotation.
-- **Easy Publishing:** Simply publish messages via the `MqttTemplate` bean.
-- **Auto-Configuration:** Comprehensive support for `application.properties` or `application.yml`.
-- **JSON Support:** Automatic conversion of incoming JSON messages to Java objects.
-- **Asynchronous Processing:** Processing of incoming messages in a configurable thread pool.
+- **Annotation-Based Subscription:** Use `@MqttListener` to subscribe to MQTT topics.
+- **Easy Publishing:** Use the `MqttTemplate` bean to publish messages.
+- **Auto-Configuration:** Configure the MQTT connection using `application.properties` or `application.yml`.
+- **JSON Support:** Automatic conversion of JSON payloads to Java objects.
 
-## Installation
+## Getting Started
 
 ### Maven
 
 ```xml
-
 <dependency>
     <groupId>io.github.enesdurmus</groupId>
     <artifactId>spring-boot-starter-mqtt</artifactId>
-    <version>1.0.0</version> <!-- Check for the latest version -->
+    <version>1.0.1</version>  <!-- Check for the latest version -->
 </dependency>
 ```
 
 ## Configuration
 
-You can add the following properties to your `application.yml` (or `application.properties`) file to configure the
-project.
+Add the following properties to your `application.yml`:
 
 ```yaml
 mqtt:
@@ -38,10 +33,6 @@ mqtt:
   client-id: spring-boot-app
   username: user
   password: password
-  clean-session: true
-  keep-alive-interval: 60
-  connection-timeout: 60
-  concurrency: 5
 ```
 
 ### All Configuration Parameters
@@ -55,14 +46,13 @@ mqtt:
 | `mqtt.clean-session`       | `cleanSession` flag. If `false`, a persistent session is created.                       | `true`               |
 | `mqtt.keep-alive-interval` | Keep-alive interval in seconds.                                                         | `60`                 |
 | `mqtt.connection-timeout`  | Connection timeout in seconds.                                                          | `60`                 |
-| `mqtt.concurrency`         | The number of threads in the thread pool that will process incoming messages.           | `1`                  |
+| `mqtt.concurrency`         | The number of threads in the thread pool that will process incoming messages.           | `3`                  |
 
 ## Usage
 
-### Listening for Messages (`@MqttListener`)
+### Subscribing to Topics
 
-You can listen to specific topics by adding the `@MqttListener` annotation to a method. The starter automatically tries
-to convert incoming JSON formatted messages to the object type in the method parameter.
+Use the `@MqttListener` annotation on a method to subscribe to a topic.
 
 ```java
 import io.github.enesdurmus.mqtt.MqttListener;
@@ -89,26 +79,18 @@ public class MqttListeners {
 
     public static class TemperatureReading {
         private double temperature;
-
-        public double getTemperature() {
-            return temperature;
-        }
-
-        public void setTemperature(double temperature) {
-            this.temperature = temperature;
-        }
+        // Getters and setters
     }
 }
 ```
 
-### Publishing Messages (`MqttTemplate`)
+### Publishing Messages
 
-To publish a message, you can inject the `MqttTemplate` bean and use the `publish` method.
+Inject the `MqttTemplate` bean to publish messages.
 
 ```java
 import io.github.enesdurmus.mqtt.MqttTemplate;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
