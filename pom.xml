@@ -92,6 +92,7 @@
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
+                            <asynchronous>true</asynchronous>
                         </configuration>
                     </plugin>
                     <plugin>
