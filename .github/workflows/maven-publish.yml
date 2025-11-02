@@ -24,6 +24,14 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Show Maven settings.xml
+        run: cat ~/.m2/settings.xml
+
+      - name: Test Central credentials (quick)
+        run: |
+          echo "Testing with username from secret: ${{ secrets.CENTRAL_TOKEN_USERNAME }}"
+          curl -u "${{ secrets.CENTRAL_TOKEN_USERNAME }}:${{ secrets.CENTRAL_TOKEN_PASSWORD }}" -I https://central.sonatype.com/ || true
+
       - name: Deploy to Maven Central
         run: mvn -P release clean deploy
         env:
