@@ -20,7 +20,8 @@ class MqttListenerEndpointTest {
         Method method = TestBean.class.getDeclaredMethod("handleMessage", String.class, MqttMessage.class);
         TestBean bean = spy(new TestBean());
         MessageConverter converter = mock(MessageConverter.class);
-        MqttListenerEndpoint endpoint = new MqttListenerEndpoint(bean, method, List.of("topic1"), 1, true, converter);
+        MqttListenerEndpoint endpoint = new MqttListenerEndpoint(method.getName(), method, List.of("topic1"), 1, true, converter);
+        endpoint.setBeanProxy(bean);
         MqttMessage context = new MqttMessage("context".getBytes());
 
         // when
@@ -36,7 +37,8 @@ class MqttListenerEndpointTest {
         Method method = TestBean.class.getDeclaredMethod("handleMessage", String.class, MqttMessage.class);
         TestBean bean = spy(new TestBean());
         MessageConverter converter = mock(MessageConverter.class);
-        MqttListenerEndpoint endpoint = new MqttListenerEndpoint(bean, method, List.of("topic1"), 1, true, converter);
+        MqttListenerEndpoint endpoint = new MqttListenerEndpoint(method.getName(), method, List.of("topic1"), 1, true, converter);
+        endpoint.setBeanProxy(bean);
         MqttMessage context = new MqttMessage("context".getBytes());
 
         // when
@@ -53,7 +55,8 @@ class MqttListenerEndpointTest {
         TestBean bean = spy(new TestBean());
         MessageConverter converter = mock(MessageConverter.class);
         when(converter.read("42", Integer.class)).thenReturn(42);
-        MqttListenerEndpoint endpoint = new MqttListenerEndpoint(bean, method, List.of("topic1"), 1, false, converter);
+        MqttListenerEndpoint endpoint = new MqttListenerEndpoint(method.getName(), method, List.of("topic1"), 1, false, converter);
+        endpoint.setBeanProxy(bean);
 
         // when
         endpoint.invoke("42", null);
@@ -69,7 +72,8 @@ class MqttListenerEndpointTest {
         TestBean bean = new TestBean();
         MessageConverter converter = mock(MessageConverter.class);
         when(converter.read("invalid", Integer.class)).thenThrow(new RuntimeException("Conversion failed"));
-        MqttListenerEndpoint endpoint = new MqttListenerEndpoint(bean, method, List.of("topic1"), 1, false, converter);
+        MqttListenerEndpoint endpoint = new MqttListenerEndpoint(method.getName(), method, List.of("topic1"), 1, false, converter);
+        endpoint.setBeanProxy(bean);
 
         // when / then
         assertThrows(IllegalStateException.class, () -> endpoint.invoke("invalid", null));

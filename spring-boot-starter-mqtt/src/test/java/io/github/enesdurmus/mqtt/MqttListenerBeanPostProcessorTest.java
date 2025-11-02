@@ -6,6 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Objects;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -41,7 +43,7 @@ class MqttListenerBeanPostProcessorTest {
 
         // then
         verify(mqttListenerRegistry).register(argThat(endpoint ->
-                endpoint.getBean() == bean &&
+                Objects.equals(endpoint.getBeanName(), beanName) &&
                 endpoint.getMethod().getName().equals("annotatedMethod") &&
                 endpoint.getTopics().contains("topic1") &&
                 endpoint.getQos() == 1 &&

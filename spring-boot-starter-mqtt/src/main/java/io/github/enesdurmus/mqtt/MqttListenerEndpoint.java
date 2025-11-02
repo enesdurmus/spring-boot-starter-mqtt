@@ -7,7 +7,7 @@ import java.util.List;
 
 public class MqttListenerEndpoint {
 
-    private final Object bean;
+    private final String beanName;
     private final Method method;
     private final List<String> topics;
     private final int qos;
@@ -15,13 +15,15 @@ public class MqttListenerEndpoint {
     private final MessageConverter converter;
     private final Class<?>[] parameterTypes;
 
-    public MqttListenerEndpoint(Object bean,
+    private Object beanProxy;
+
+    public MqttListenerEndpoint(String beanName,
                                 Method method,
                                 List<String> topics,
                                 int qos,
                                 boolean injectContext,
                                 MessageConverter converter) {
-        this.bean = bean;
+        this.beanName = beanName;
         this.method = method;
         this.topics = topics;
         this.qos = qos;
@@ -43,10 +45,14 @@ public class MqttListenerEndpoint {
                     args[i] = converter.read(payload, type);
                 }
             }
-            method.invoke(bean, args);
+            method.invoke(getBeanProxy(), args);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to invoke method: " + method, e);
         }
+    }
+
+    public void setBeanProxy(Object beanProxy) {
+        this.beanProxy = beanProxy;
     }
 
     public List<String> getTopics() {
@@ -57,8 +63,12 @@ public class MqttListenerEndpoint {
         return qos;
     }
 
-    public Object getBean() {
-        return bean;
+    public String getBeanName() {
+        return beanName;
+    }
+
+    public Object getBeanProxy() {
+        return beanProxy;
     }
 
     public Method getMethod() {

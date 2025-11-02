@@ -15,7 +15,7 @@ class MqttMessageListener implements IMqttMessageListener {
     }
 
     @Override
-    public void messageArrived(String topic, MqttMessage message) throws Exception {
+    public void messageArrived(String topic, MqttMessage message) {
         String payload = new String(message.getPayload());
 
         executor.execute(() -> {
