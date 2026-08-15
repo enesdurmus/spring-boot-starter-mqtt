@@ -1,13 +1,14 @@
 name: Publish to Maven Central
 
 on:
-  workflow_dispatch:
+  push:
+    tags: [ 'v*.*.*' ]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -18,15 +19,36 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: maven
           server-id: central
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Verify project version matches the tag
+        run: |
+          version="$(./mvnw -B -q help:evaluate -Dexpression=project.version -DforceStdout)"
+          if [ "$version" != "${GITHUB_REF_NAME#v}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match project version $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_ENV"
+
       - name: Deploy to Maven Central
-        run: mvn -P release clean deploy
+        run: ./mvnw -B -P release clean deploy -Dmqtt.it.required=true
         env:
           MAVEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=""
+          case "$version" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "${GITHUB_REF_NAME}" $prerelease \
+            --verify-tag \
+            --title "${GITHUB_REF_NAME}" \
+            --notes "Published to Maven Central as \`io.github.enesdurmus:mqtt-spring-boot-starter:${version}\`. See [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/CHANGELOG.md)."
