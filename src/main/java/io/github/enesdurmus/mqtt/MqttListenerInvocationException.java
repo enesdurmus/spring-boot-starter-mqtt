@@ -1,16 +1,21 @@
 package io.github.enesdurmus.mqtt;
 
-/**
- * Exception thrown when a listener method invocation fails.
- * This exception properly unwraps the underlying cause for better error messages.
- */
-public class MqttListenerInvocationException extends RuntimeException {
+import org.springframework.messaging.Message;
 
-    public MqttListenerInvocationException(String message) {
-        super(message);
+/**
+ * Thrown when a listener method fails or cannot be invoked.
+ */
+public class MqttListenerInvocationException extends MqttClientException {
+
+    public MqttListenerInvocationException(String description) {
+        super(description);
     }
 
-    public MqttListenerInvocationException(String message, Throwable cause) {
-        super(message, cause);
+    public MqttListenerInvocationException(String description, Throwable cause) {
+        super(description, cause);
+    }
+
+    public MqttListenerInvocationException(Message<?> message, String description, Throwable cause) {
+        super(message, description, cause);
     }
 }

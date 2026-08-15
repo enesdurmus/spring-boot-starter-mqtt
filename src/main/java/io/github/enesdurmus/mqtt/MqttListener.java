@@ -1,64 +1,57 @@
 package io.github.enesdurmus.mqtt;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to mark a method as an MQTT message listener.
+ * Marks a method as an MQTT message listener.
  *
- * <p>Example usage:
- * <pre>
- * {@code
- * @MqttListener(topics = "sensor/temperature", qos = 1)
- * public void handleTemperature(TemperatureReading reading) {
- *     // process the reading
+ * <pre>{@code
+ * @MqttListener(topics = "sensor/+/temperature", qos = 1,
+ *               retainHandling = RetainHandling.DO_NOT_SEND)
+ * public void onReading(@Topic String topic, @Payload Reading reading) {
  * }
- *
- * // With property placeholder
- * @MqttListener(topics = "${mqtt.topics.sensor}")
- * public void handleSensor(SensorData data) {
- *     // process sensor data
- * }
- *
- * // With topic injection
- * @MqttListener(topics = "sensor/#")
- * public void handleWildcard(@Topic String topic, @Payload SensorData data) {
- *     System.out.println("Received from: " + topic);
- * }
- * }
- * </pre>
+ * }</pre>
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@Documented
 public @interface MqttListener {
 
     /**
-     * The topics to subscribe to. Supports property placeholders (e.g., "${mqtt.topic}").
-     * Wildcards are supported: '+' for single level, '#' for multi-level.
+     * Topic filters to subscribe to. Supports {@code +} and {@code #} wildcards and
+     * {@code ${...}} / {@code #{...}} placeholders. A single entry may list several
+     * comma-separated filters.
      */
     String[] topics();
 
-    /**
-     * Quality of Service level for the subscription.
-     * <ul>
-     *   <li>0 - At most once (fire and forget)</li>
-     *   <li>1 - At least once (acknowledged delivery)</li>
-     *   <li>2 - Exactly once (assured delivery)</li>
-     * </ul>
-     */
+    /** Subscription QoS: 0, 1 or 2. */
     int qos() default 0;
 
-    /**
-     * Unique identifier for this listener. Used for logging and management.
-     * If not specified, a default ID will be generated.
-     */
-    String id() default "";
+    /** Whether the broker replays retained messages when this subscription is established. */
+    RetainHandling retainHandling() default RetainHandling.SEND;
 
     /**
-     * Bean name of a custom {@link MqttListenerErrorHandler} to use for this listener.
-     * If not specified, the default error handler will be used.
+     * Whether the broker preserves the RETAIN flag on forwarded messages, making
+     * {@code @Header(MqttHeaders.RETAINED)} meaningful for live traffic.
      */
+    boolean retainAsPublished() default false;
+
+    /** Whether the broker suppresses messages published by this same client. */
+    boolean noLocal() default false;
+
+    /** Unique listener id. Defaults to a generated {@code beanName#methodName} value. */
+    String id() default "";
+
+    /** Bean name of a {@link MqttListenerErrorHandler}; falls back to the application-wide one. */
     String errorHandler() default "";
+
+    /**
+     * Whether this listener subscribes on startup. When {@code false} it is registered but
+     * dormant until started through {@link MqttListenerRegistry}.
+     */
+    String autoStartup() default "true";
 }

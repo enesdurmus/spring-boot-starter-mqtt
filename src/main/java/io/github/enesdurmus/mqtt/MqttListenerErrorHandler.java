@@ -1,33 +1,16 @@
 package io.github.enesdurmus.mqtt;
 
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.springframework.messaging.Message;
 
 /**
- * Error handler for MQTT listener processing failures.
- * Implement this interface to provide custom error handling logic.
+ * Handles failures raised while processing an inbound message. Exceptions thrown from an
+ * implementation are logged and swallowed.
  *
- * <p>Example usage:
- * <pre>
- * {@code
- * @Bean
- * public MqttListenerErrorHandler myErrorHandler() {
- *     return (topic, message, exception) -> {
- *         log.error("Failed to process message from {}: {}", topic, exception.getMessage());
- *         // Send to dead letter topic, metrics, alerting, etc.
- *     };
- * }
- * }
- * </pre>
+ * <p>The failing message carries {@link MqttHeaders#LISTENER_ID} and the inbound
+ * {@code mqtt_received*} headers; wrap it with {@link MqttMessageHeaderAccessor} for typed access.
  */
 @FunctionalInterface
 public interface MqttListenerErrorHandler {
 
-    /**
-     * Handle an error that occurred during message processing.
-     *
-     * @param topic     the topic the message was received from
-     * @param message   the original MQTT message
-     * @param exception the exception that occurred
-     */
-    void handleError(String topic, MqttMessage message, Exception exception);
+    void handleError(Message<?> message, Exception exception);
 }

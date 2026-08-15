@@ -1,72 +1,90 @@
 package io.github.enesdurmus.mqtt;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.lang.Nullable;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Configuration properties for MQTT connection and listener settings.
- *
- * <p>Example configuration in application.yml:
- * <pre>
- * mqtt:
- *   url: tcp://localhost:1883
- *   client-id: my-app
- *   username: user
- *   password: secret
- *   clean-session: true
- *   keep-alive-interval: 60
- *   connection-timeout: 30
- *   concurrency: 5
- *   queue-capacity: 100
- * </pre>
+ * Configuration properties for the MQTT connection and its listeners.
  */
 @ConfigurationProperties(prefix = "mqtt")
 public class MqttProperties {
 
     /**
-     * MQTT broker URL (required). Example: tcp://localhost:1883 or ssl://broker.example.com:8883
+     * Broker URL, for example tcp://localhost:1883, ssl://broker.example.com:8883 or
+     * ws://localhost:8000/mqtt. Required; the starter backs off entirely when it is absent.
      */
     private String url;
 
     /**
-     * Client identifier. Must be unique per connection to the broker.
+     * Client identifier. Must be unique per broker connection. Defaults to the application name
+     * suffixed with a random token.
      */
-    private String clientId = "spring-mqtt-client";
+    private String clientId;
 
-    /**
-     * Username for broker authentication (optional).
-     */
+    /** Username for broker authentication. */
     private String username;
 
-    /**
-     * Password for broker authentication (optional).
-     */
+    /** Password for broker authentication. */
     private String password;
 
     /**
-     * Whether to start with a clean session.
-     * If true, the broker will not store any subscription info or undelivered messages.
+     * Whether to start a fresh session, discarding any state the broker holds for this client id.
+     * Set to false together with a session-expiry-interval for durable subscriptions.
      */
-    private boolean cleanSession = true;
+    private boolean cleanStart = true;
 
     /**
-     * Keep-alive interval in seconds. The client will send ping requests at this interval.
+     * How long the broker keeps session state after disconnect. Only meaningful when
+     * clean-start is false. Null leaves the broker default in place.
      */
-    private int keepAliveInterval = 60;
+    private Duration sessionExpiryInterval;
+
+    /** Interval at which the client pings the broker to keep the connection alive. */
+    private Duration keepAliveInterval = Duration.ofSeconds(60);
+
+    /** How long to wait for the connect handshake to complete. */
+    private Duration connectionTimeout = Duration.ofSeconds(30);
+
+    /** How long to wait for a subscribe, unsubscribe or awaited publish to be acknowledged. */
+    private Duration actionTimeout = Duration.ofSeconds(10);
+
+    /** How long a graceful disconnect may take during shutdown. */
+    private Duration disconnectTimeout = Duration.ofSeconds(5);
 
     /**
-     * Connection timeout in seconds.
+     * Delay between attempts when the initial connect fails. Only applies before the first
+     * successful connect; afterwards Paho's own automatic reconnect takes over.
      */
-    private int connectionTimeout = 30;
+    private Duration connectRetryInterval = Duration.ofSeconds(10);
 
     /**
-     * Number of concurrent threads for processing messages.
+     * Whether an unreachable broker fails application startup. When false the context starts and
+     * the client keeps retrying in the background.
      */
-    private int concurrency = 3;
+    private boolean failFast = false;
 
-    /**
-     * Queue capacity for pending messages when all threads are busy.
-     */
-    private int queueCapacity = 100;
+    /** Whether the client reconnects automatically after losing an established connection. */
+    private boolean automaticReconnect = true;
+
+    /** Shortest backoff delay used by automatic reconnect. */
+    private Duration reconnectMinDelay = Duration.ofSeconds(1);
+
+    /** Longest backoff delay used by automatic reconnect. */
+    private Duration reconnectMaxDelay = Duration.ofSeconds(120);
+
+    /** Maximum number of QoS 1 and 2 messages the broker may have in flight towards this client. */
+    private Integer receiveMaximum;
+
+    /** Largest packet this client accepts, in bytes. */
+    private Long maximumPacketSize;
+
+    private final Listener listener = new Listener();
+    private final Publisher publisher = new Publisher();
+    private final Will will = new Will();
 
     public String getUrl() {
         return url;
@@ -76,6 +94,7 @@ public class MqttProperties {
         this.url = url;
     }
 
+    @Nullable
     public String getClientId() {
         return clientId;
     }
@@ -84,6 +103,7 @@ public class MqttProperties {
         this.clientId = clientId;
     }
 
+    @Nullable
     public String getUsername() {
         return username;
     }
@@ -92,6 +112,7 @@ public class MqttProperties {
         this.username = username;
     }
 
+    @Nullable
     public String getPassword() {
         return password;
     }
@@ -100,43 +121,255 @@ public class MqttProperties {
         this.password = password;
     }
 
-    public boolean isCleanSession() {
-        return cleanSession;
+    public boolean isCleanStart() {
+        return cleanStart;
     }
 
-    public void setCleanSession(boolean cleanSession) {
-        this.cleanSession = cleanSession;
+    public void setCleanStart(boolean cleanStart) {
+        this.cleanStart = cleanStart;
     }
 
-    public int getKeepAliveInterval() {
+    @Nullable
+    public Duration getSessionExpiryInterval() {
+        return sessionExpiryInterval;
+    }
+
+    public void setSessionExpiryInterval(Duration sessionExpiryInterval) {
+        this.sessionExpiryInterval = sessionExpiryInterval;
+    }
+
+    public Duration getKeepAliveInterval() {
         return keepAliveInterval;
     }
 
-    public void setKeepAliveInterval(int keepAliveInterval) {
+    public void setKeepAliveInterval(Duration keepAliveInterval) {
         this.keepAliveInterval = keepAliveInterval;
     }
 
-    public int getConnectionTimeout() {
+    public Duration getConnectionTimeout() {
         return connectionTimeout;
     }
 
-    public void setConnectionTimeout(int connectionTimeout) {
+    public void setConnectionTimeout(Duration connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
     }
 
-    public int getConcurrency() {
-        return concurrency;
+    public Duration getActionTimeout() {
+        return actionTimeout;
     }
 
-    public void setConcurrency(int concurrency) {
-        this.concurrency = concurrency;
+    public void setActionTimeout(Duration actionTimeout) {
+        this.actionTimeout = actionTimeout;
     }
 
-    public int getQueueCapacity() {
-        return queueCapacity;
+    public Duration getDisconnectTimeout() {
+        return disconnectTimeout;
     }
 
-    public void setQueueCapacity(int queueCapacity) {
-        this.queueCapacity = queueCapacity;
+    public void setDisconnectTimeout(Duration disconnectTimeout) {
+        this.disconnectTimeout = disconnectTimeout;
+    }
+
+    public Duration getConnectRetryInterval() {
+        return connectRetryInterval;
+    }
+
+    public void setConnectRetryInterval(Duration connectRetryInterval) {
+        this.connectRetryInterval = connectRetryInterval;
+    }
+
+    public boolean isFailFast() {
+        return failFast;
+    }
+
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
+    }
+
+    public boolean isAutomaticReconnect() {
+        return automaticReconnect;
+    }
+
+    public void setAutomaticReconnect(boolean automaticReconnect) {
+        this.automaticReconnect = automaticReconnect;
+    }
+
+    public Duration getReconnectMinDelay() {
+        return reconnectMinDelay;
+    }
+
+    public void setReconnectMinDelay(Duration reconnectMinDelay) {
+        this.reconnectMinDelay = reconnectMinDelay;
+    }
+
+    public Duration getReconnectMaxDelay() {
+        return reconnectMaxDelay;
+    }
+
+    public void setReconnectMaxDelay(Duration reconnectMaxDelay) {
+        this.reconnectMaxDelay = reconnectMaxDelay;
+    }
+
+    @Nullable
+    public Integer getReceiveMaximum() {
+        return receiveMaximum;
+    }
+
+    public void setReceiveMaximum(Integer receiveMaximum) {
+        this.receiveMaximum = receiveMaximum;
+    }
+
+    @Nullable
+    public Long getMaximumPacketSize() {
+        return maximumPacketSize;
+    }
+
+    public void setMaximumPacketSize(Long maximumPacketSize) {
+        this.maximumPacketSize = maximumPacketSize;
+    }
+
+    public Listener getListener() {
+        return listener;
+    }
+
+    public Publisher getPublisher() {
+        return publisher;
+    }
+
+    public Will getWill() {
+        return will;
+    }
+
+    /** Thread pool that listener invocations run on. */
+    public static class Listener {
+
+        /** Number of threads kept alive for message processing. */
+        private int concurrency = 3;
+
+        /** Upper bound on threads; the pool only grows past the core size once the queue is full. */
+        private Integer maxConcurrency;
+
+        /** How many messages may wait for a free thread. */
+        private int queueCapacity = 100;
+
+        /** How long shutdown waits for in-flight messages to finish. */
+        private Duration shutdownTimeout = Duration.ofSeconds(30);
+
+        public int getConcurrency() {
+            return concurrency;
+        }
+
+        public void setConcurrency(int concurrency) {
+            this.concurrency = concurrency;
+        }
+
+        public int getMaxConcurrency() {
+            return maxConcurrency != null ? maxConcurrency : concurrency * 2;
+        }
+
+        public void setMaxConcurrency(Integer maxConcurrency) {
+            this.maxConcurrency = maxConcurrency;
+        }
+
+        public int getQueueCapacity() {
+            return queueCapacity;
+        }
+
+        public void setQueueCapacity(int queueCapacity) {
+            this.queueCapacity = queueCapacity;
+        }
+
+        public Duration getShutdownTimeout() {
+            return shutdownTimeout;
+        }
+
+        public void setShutdownTimeout(Duration shutdownTimeout) {
+            this.shutdownTimeout = shutdownTimeout;
+        }
+    }
+
+    public static class Publisher {
+
+        /**
+         * Whether publish calls block until the broker acknowledges. Leave enabled so a failed
+         * publish surfaces as an exception rather than being lost silently.
+         */
+        private boolean awaitDelivery = true;
+
+        public boolean isAwaitDelivery() {
+            return awaitDelivery;
+        }
+
+        public void setAwaitDelivery(boolean awaitDelivery) {
+            this.awaitDelivery = awaitDelivery;
+        }
+    }
+
+    /** Last Will and Testament, published by the broker if this client disconnects ungracefully. */
+    public static class Will {
+
+        /** Topic to publish the will to. Leaving this empty disables the will. */
+        private String topic;
+
+        /** Will payload. */
+        private String payload = "";
+
+        private int qos = 0;
+
+        private boolean retained = false;
+
+        @Nullable
+        public String getTopic() {
+            return topic;
+        }
+
+        public void setTopic(String topic) {
+            this.topic = topic;
+        }
+
+        public String getPayload() {
+            return payload;
+        }
+
+        public void setPayload(String payload) {
+            this.payload = payload;
+        }
+
+        public int getQos() {
+            return qos;
+        }
+
+        public void setQos(int qos) {
+            this.qos = qos;
+        }
+
+        public boolean isRetained() {
+            return retained;
+        }
+
+        public void setRetained(boolean retained) {
+            this.retained = retained;
+        }
+    }
+
+    List<String> validate() {
+        List<String> errors = new ArrayList<>();
+        if (listener.getConcurrency() < 1) {
+            errors.add("mqtt.listener.concurrency must be at least 1");
+        }
+        if (listener.getMaxConcurrency() < listener.getConcurrency()) {
+            errors.add("mqtt.listener.max-concurrency must not be smaller than mqtt.listener.concurrency");
+        }
+        if (listener.getQueueCapacity() < 0) {
+            errors.add("mqtt.listener.queue-capacity must not be negative");
+        }
+        if (will.getTopic() != null) {
+            try {
+                Qos.validate(will.getQos());
+            } catch (IllegalArgumentException e) {
+                errors.add("mqtt.will.qos must be 0, 1 or 2");
+            }
+        }
+        return errors;
     }
 }

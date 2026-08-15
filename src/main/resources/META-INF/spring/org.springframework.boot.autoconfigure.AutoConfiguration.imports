@@ -1,1 +1,2 @@
-io.github.enesdurmus.mqtt.MqttConfig
+io.github.enesdurmus.mqtt.MqttAutoConfiguration
+io.github.enesdurmus.mqtt.MqttHealthAutoConfiguration
