@@ -1,6 +1,6 @@
 # MQTT Spring Boot Starter
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.enesdurmus/mqtt-spring-boot-starter.svg)](https://search.maven.org/artifact/io.github.enesdurmus/mqtt-spring-boot-starter)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.enesdurmus/mqtt-spring-boot-starter.svg)](https://central.sonatype.com/artifact/io.github.enesdurmus/mqtt-spring-boot-starter)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Annotation-driven MQTT 5 listeners for Spring Boot, in the style of `@KafkaListener` and
@@ -30,7 +30,18 @@ implementation 'io.github.enesdurmus:mqtt-spring-boot-starter:2.0.0'
 
 Requires Java 17+, Spring Boot 3.x, and a broker that speaks **MQTT 5** (Mosquitto 2.x, HiveMQ,
 EMQX, VerneMQ, AWS IoT Core). Jackson is optional — add `jackson-databind` only if you publish or
-consume object payloads as JSON.
+consume object payloads as JSON. GraalVM native images are supported out of the box.
+
+## Packages
+
+| Package | Contents |
+|---|---|
+| `io.github.enesdurmus.mqtt` | Exceptions — everything thrown across the API extends `MqttClientException` |
+| `…mqtt.annotation` | `@MqttListener`, `@Topic` |
+| `…mqtt.core` | `MqttOperations` / `MqttTemplate`, `MqttConnection` / `MqttConnectionSettings`, `MqttSubscriptionManager`, `MqttHeaders`, `MqttMessageHeaderAccessor`, `MqttSubscriptionOptions` |
+| `…mqtt.listener` | Endpoints, containers, `MqttListenerEndpointRegistry`, `MqttListenerConfigurer`, `MqttListenerErrorHandler` |
+| `…mqtt.support` | Argument resolvers, `MqttMessageConverters` and other extension points |
+| `…mqtt.autoconfigure` | `MqttAutoConfiguration`, `MqttProperties`, health indicator |
 
 ## Configuration
 
@@ -254,7 +265,7 @@ created, so an unreachable broker does not block startup unless `mqtt.fail-fast:
 retries the initial connect on `mqtt.connect-retry-interval`, and all subscriptions are restored
 automatically after a reconnect.
 
-Observe it with `MqttConnectionListener`:
+Declare an `MqttConnectionListener` bean to observe it:
 
 ```java
 @Bean
@@ -276,7 +287,7 @@ Every bean the starter declares is conditional; declaring your own replaces it.
 | Bean / interface | Replaces |
 |---|---|
 | `MqttConnectionOptionsCustomizer` | TLS socket factories, WebSocket headers, auth data — anything the properties do not expose |
-| `MessageConverter` named `mqttMessageConverter` | Payload conversion |
+| `MessageConverter` named `mqttMessageConverter` | Payload conversion — start from `MqttMessageConverters.defaults()` to keep the built-in ones |
 | `HandlerMethodArgumentResolver` beans | Extra listener parameter types |
 | `MqttListenerContainerFactory` | Container creation and dispatch |
 | `MqttListenerErrorHandler` | Default error handling |
@@ -301,6 +312,10 @@ every listener. Disable with `management.health.mqtt.enabled: false`.
 
 2.0.0 moves from Paho MQTT 3.1.1 to Paho MQTT 5 and removes Paho types from the public API.
 
+Types are also split out of the single flat package — see [Packages](#packages). The names are
+unchanged, so search and replace `import io.github.enesdurmus.mqtt.` and let the compiler point
+out the rest.
+
 | 1.x | 2.0.0 |
 |---|---|
 | `MqttTemplate` | `MqttOperations` (`MqttTemplate` is the implementation) |
@@ -324,9 +339,13 @@ default charset.
 ./mvnw verify
 ```
 
-Integration tests run against a real HiveMQ broker via Testcontainers and are skipped when Docker
-is unavailable.
+Unit tests (`*Tests`) run under Surefire in `test`; integration tests (`*IT`) run under Failsafe in
+`integration-test`, against a real HiveMQ broker via Testcontainers. They skip themselves when
+Docker is unavailable — pass `-Dmqtt.it.required=true` to turn that skip into a failure, as CI does.
+
+Release notes live in [CHANGELOG.md](CHANGELOG.md); the release procedure in
+[RELEASING.md](RELEASING.md).
 
 ## License
 
-Apache License 2.0
+[Apache License 2.0](LICENSE)
