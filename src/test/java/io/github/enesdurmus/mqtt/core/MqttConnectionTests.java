@@ -7,6 +7,7 @@ import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.springframework.scheduling.TaskScheduler;
 
 import java.util.ArrayList;
@@ -30,6 +31,30 @@ class MqttConnectionTests {
         ArgumentCaptor<MqttCallback> captor = ArgumentCaptor.forClass(MqttCallback.class);
         verify(client).setCallback(captor.capture());
         callback = captor.getValue();
+    }
+
+    @Test
+    void inboundMessagesGoToTheRegisteredListener() throws Exception {
+        List<String> received = new ArrayList<>();
+        connection.setMessageListener((topic, message) -> received.add(topic));
+
+        callback.messageArrived("devices/pump/events", new MqttMessage("x".getBytes()));
+
+        assertThat(received).containsExactly("devices/pump/events");
+    }
+
+    @Test
+    void aFailingMessageListenerDoesNotBringTheConnectionDown() throws Exception {
+        connection.setMessageListener((topic, message) -> {
+            throw new IllegalStateException("boom");
+        });
+
+        callback.messageArrived("t", new MqttMessage("x".getBytes()));
+    }
+
+    @Test
+    void messagesArrivingWithoutAListenerAreDropped() throws Exception {
+        callback.messageArrived("t", new MqttMessage("x".getBytes()));
     }
 
     private static MqttConnectionListener onConnected(List<String> events) {

@@ -12,6 +12,7 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttSubscription;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.scheduling.TaskScheduler;
@@ -41,6 +42,8 @@ public class MqttConnection implements SmartLifecycle, DisposableBean {
     private final MqttConnectionSettings settings;
     private final TaskScheduler scheduler;
     private final CopyOnWriteArrayList<MqttConnectionListener> listeners = new CopyOnWriteArrayList<>();
+
+    private volatile @Nullable IMqttMessageListener messageListener;
 
     private final Object lifecycleMonitor = new Object();
     private volatile boolean running;
@@ -134,11 +137,23 @@ public class MqttConnection implements SmartLifecycle, DisposableBean {
         }
     }
 
-    public IMqttToken subscribe(MqttSubscription subscription, IMqttMessageListener listener) {
+    /**
+     * Sets the single listener every inbound message is handed to, replacing any previous one.
+     *
+     * <p>Deliberately one listener for the whole connection rather than one per topic filter:
+     * Paho keeps per-filter listeners in plain {@code HashMap}s that its callback thread iterates
+     * while delivering, so subscribing or unsubscribing under traffic corrupts them and takes the
+     * connection down. Which subscriber a message belongs to is decided by
+     * {@link MqttSubscriptionManager}, which already knows the filters.
+     */
+    public void setMessageListener(@Nullable IMqttMessageListener messageListener) {
+        this.messageListener = messageListener;
+    }
+
+    public IMqttToken subscribe(MqttSubscription subscription) {
+        Assert.notNull(subscription, "subscription must not be null");
         try {
-            IMqttToken token = client.subscribe(
-                    new MqttSubscription[]{subscription}, null, null,
-                    new IMqttMessageListener[]{listener}, null);
+            IMqttToken token = client.subscribe(new MqttSubscription[]{subscription}, null, null, null);
             token.waitForCompletion(settings.getActionTimeout().toMillis());
             verifyGranted(subscription, token);
             return token;
@@ -261,7 +276,16 @@ public class MqttConnection implements SmartLifecycle, DisposableBean {
 
         @Override
         public void messageArrived(String topic, org.eclipse.paho.mqttv5.common.MqttMessage message) {
-            log.debug("Client [{}] received a message on [{}] with no registered listener", clientId, topic);
+            IMqttMessageListener listener = messageListener;
+            if (listener == null) {
+                log.debug("Client [{}] received a message on [{}] with no registered listener", clientId, topic);
+                return;
+            }
+            try {
+                listener.messageArrived(topic, message);
+            } catch (Exception e) {
+                log.error("Message listener failed on a message from [{}]", topic, e);
+            }
         }
 
         @Override

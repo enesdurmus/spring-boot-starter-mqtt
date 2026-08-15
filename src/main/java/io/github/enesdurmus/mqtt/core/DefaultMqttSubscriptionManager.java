@@ -3,6 +3,7 @@ package io.github.enesdurmus.mqtt.core;
 import io.github.enesdurmus.mqtt.MqttSubscriptionException;
 
 import org.eclipse.paho.mqttv5.common.MqttSubscription;
+import org.eclipse.paho.mqttv5.common.util.MqttTopicValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
@@ -10,9 +11,9 @@ import org.springframework.messaging.MessageHandler;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -29,7 +30,7 @@ public final class DefaultMqttSubscriptionManager implements MqttSubscriptionMan
     private static final Logger log = LoggerFactory.getLogger(DefaultMqttSubscriptionManager.class);
 
     private final MqttConnection connection;
-    private final Map<String, TopicSubscription> subscriptions = new HashMap<>();
+    private final Map<String, TopicSubscription> subscriptions = new ConcurrentHashMap<>();
     private final Object monitor = new Object();
 
     private DefaultMqttSubscriptionManager(MqttConnection connection) {
@@ -37,15 +38,33 @@ public final class DefaultMqttSubscriptionManager implements MqttSubscriptionMan
     }
 
     /**
-     * Creates a manager and attaches it to {@code connection} so that subscriptions survive a
-     * reconnect. A factory method rather than a constructor, so the connection never sees a
-     * half-constructed listener.
+     * Creates a manager, attaches it to {@code connection} as the receiver of inbound messages and
+     * as the listener that restores subscriptions after a reconnect. A factory method rather than
+     * a constructor, so the connection never sees a half-constructed listener.
      */
     public static DefaultMqttSubscriptionManager create(MqttConnection connection) {
         Assert.notNull(connection, "connection must not be null");
         DefaultMqttSubscriptionManager manager = new DefaultMqttSubscriptionManager(connection);
         connection.addListener(manager);
+        connection.setMessageListener(manager::route);
         return manager;
+    }
+
+    /**
+     * Hands a message to every filter it matches. A message may match more than one filter, and
+     * each of them gets it.
+     */
+    private void route(String topic, org.eclipse.paho.mqttv5.common.MqttMessage message) {
+        boolean delivered = false;
+        for (Map.Entry<String, TopicSubscription> entry : subscriptions.entrySet()) {
+            if (MqttTopicValidator.isMatched(entry.getKey(), topic)) {
+                delivered = true;
+                entry.getValue().dispatch(topic, message);
+            }
+        }
+        if (!delivered) {
+            log.debug("Received a message on [{}] matching no subscription", topic);
+        }
     }
 
     @Override
@@ -139,7 +158,7 @@ public final class DefaultMqttSubscriptionManager implements MqttSubscriptionMan
             subscription.setRetainAsPublished(merged.isRetainAsPublished());
             subscription.setNoLocal(merged.isNoLocal());
 
-            connection.subscribe(subscription, this::dispatch);
+            connection.subscribe(subscription);
             applied = merged;
             log.debug("Subscribed to [{}] with {} for {} listener(s)", topicFilter, merged, registrations.size());
         }

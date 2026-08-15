@@ -29,20 +29,21 @@ class DefaultMqttSubscriptionManagerTests {
         manager = DefaultMqttSubscriptionManager.create(connection);
     }
 
-    private IMqttMessageListener lastListener() {
+    /** The single listener the manager registers with the connection to receive every message. */
+    private IMqttMessageListener router() {
         ArgumentCaptor<IMqttMessageListener> captor = ArgumentCaptor.forClass(IMqttMessageListener.class);
-        verify(connection, org.mockito.Mockito.atLeastOnce()).subscribe(any(), captor.capture());
+        verify(connection).setMessageListener(captor.capture());
         return captor.getValue();
     }
 
     private List<MqttSubscription> subscriptions() {
         ArgumentCaptor<MqttSubscription> captor = ArgumentCaptor.forClass(MqttSubscription.class);
-        verify(connection, org.mockito.Mockito.atLeastOnce()).subscribe(captor.capture(), any());
+        verify(connection, org.mockito.Mockito.atLeastOnce()).subscribe(captor.capture());
         return captor.getAllValues();
     }
 
-    private static void deliver(IMqttMessageListener listener, String topic, String payload) throws Exception {
-        listener.messageArrived(topic, new org.eclipse.paho.mqttv5.common.MqttMessage(
+    private void deliver(String topic, String payload) throws Exception {
+        router().messageArrived(topic, new org.eclipse.paho.mqttv5.common.MqttMessage(
                 payload.getBytes(StandardCharsets.UTF_8)));
     }
 
@@ -56,7 +57,7 @@ class DefaultMqttSubscriptionManagerTests {
         manager.subscribe("sensor/temp", MqttSubscriptionOptions.DEFAULTS,
                 message -> second.add(new String((byte[]) message.getPayload(), StandardCharsets.UTF_8)));
 
-        deliver(lastListener(), "sensor/temp", "21.5");
+        deliver("sensor/temp", "21.5");
 
         assertThat(first).containsExactly("21.5");
         assertThat(second).containsExactly("21.5");
@@ -71,7 +72,7 @@ class DefaultMqttSubscriptionManagerTests {
         });
         manager.subscribe("t", MqttSubscriptionOptions.DEFAULTS, message -> received.add("ok"));
 
-        deliver(lastListener(), "t", "x");
+        deliver("t", "x");
 
         assertThat(received).containsExactly("ok");
     }
@@ -96,7 +97,7 @@ class DefaultMqttSubscriptionManagerTests {
         manager.subscribe("t", MqttSubscriptionOptions.of(1), message -> {
         });
 
-        verify(connection, times(1)).subscribe(any(), any());
+        verify(connection, times(1)).subscribe(any());
     }
 
     @Test
@@ -152,11 +153,26 @@ class DefaultMqttSubscriptionManagerTests {
                 manager.subscribe("t", MqttSubscriptionOptions.DEFAULTS, message -> received.add("gone"));
         manager.subscribe("t", MqttSubscriptionOptions.DEFAULTS, message -> received.add("kept"));
 
-        IMqttMessageListener listener = lastListener();
         cancelled.cancel();
-        deliver(listener, "t", "x");
+        deliver("t", "x");
 
         assertThat(received).containsExactly("kept");
+    }
+
+    @Test
+    void aMessageGoesToEveryFilterItMatches() throws Exception {
+        List<String> wildcard = new ArrayList<>();
+        List<String> exact = new ArrayList<>();
+        List<String> unrelated = new ArrayList<>();
+        manager.subscribe("devices/+/events", MqttSubscriptionOptions.DEFAULTS, message -> wildcard.add("hit"));
+        manager.subscribe("devices/pump/events", MqttSubscriptionOptions.DEFAULTS, message -> exact.add("hit"));
+        manager.subscribe("other/#", MqttSubscriptionOptions.DEFAULTS, message -> unrelated.add("hit"));
+
+        deliver("devices/pump/events", "x");
+
+        assertThat(wildcard).containsExactly("hit");
+        assertThat(exact).containsExactly("hit");
+        assertThat(unrelated).isEmpty();
     }
 
     @Test
@@ -179,7 +195,7 @@ class DefaultMqttSubscriptionManagerTests {
 
         manager.onConnected(false);
 
-        verify(connection, times(1)).subscribe(any(), any());
+        verify(connection, times(1)).subscribe(any());
     }
 
     @Test
@@ -187,7 +203,7 @@ class DefaultMqttSubscriptionManagerTests {
         List<Message<?>> received = new ArrayList<>();
         manager.subscribe("devices/#", MqttSubscriptionOptions.DEFAULTS, received::add);
 
-        deliver(lastListener(), "devices/thermostat-1/events", "{}");
+        deliver("devices/thermostat-1/events", "{}");
 
         assertThat(MqttMessageHeaderAccessor.wrap(received.get(0)).getReceivedTopic())
                 .isEqualTo("devices/thermostat-1/events");
