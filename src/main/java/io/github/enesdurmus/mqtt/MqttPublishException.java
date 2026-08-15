@@ -7,6 +7,8 @@ import org.springframework.messaging.Message;
  */
 public class MqttPublishException extends MqttClientException {
 
+    private static final long serialVersionUID = 1L;
+
     public MqttPublishException(String description) {
         super(description);
     }
